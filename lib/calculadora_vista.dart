@@ -96,6 +96,15 @@ class _CalculadoraVistaState extends State<CalculadoraVista> {
   /// Sin esto, tocar `2`, `^`, `1` dejaría `21` en pantalla en vez de `1`.
   bool _nuevaEntrada = false;
 
+  /// Indica si el número actual en pantalla es 'Par' o 'Impar'.
+  /// Si tiene decimales, es un error o excede la representación, devuelve `null`.
+  String? get _paridad {
+    if (_texto.contains('.')) return null;
+    final n = double.tryParse(_texto);
+    if (n == null) return null;
+    return _calculo.paridad(n);
+  }
+
   void _digito(String d) {
     setState(() {
       if (_texto == '0' || _nuevaEntrada) {
@@ -225,23 +234,63 @@ class _CalculadoraVistaState extends State<CalculadoraVista> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 alignment: Alignment.bottomRight,
-                // Un resultado largo (`10.295630141`) no cabe a 52 px en un
-                // teléfono. `scaleDown` lo encoge hasta que quepa entero, en
-                // vez de recortarlo: es preferible leerlo pequeño a no ver los
-                // primeros dígitos.
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    _texto,
-                    key: const Key('pantalla'),
-                    style: const TextStyle(
-                      fontSize: 52,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Indicador pequeño y suave de par / impar
+                    if (_paridad != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2D2D44),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Colors.white12,
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            _paridad!,
+                            key: const Key('paridad'),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: _paridad == 'Par'
+                                  ? Colors.tealAccent.shade100
+                                  : Colors.amberAccent.shade100,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      const SizedBox(height: 29),
+                    // Un resultado largo (`10.295630141`) no cabe a 52 px en un
+                    // teléfono. `scaleDown` lo encoge hasta que quepa entero, en
+                    // vez de recortarlo: es preferible leerlo pequeño a no ver los
+                    // primeros dígitos.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        _texto,
+                        key: const Key('pantalla'),
+                        style: const TextStyle(
+                          fontSize: 52,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                      ),
                     ),
-                    maxLines: 1,
-                  ),
+                  ],
                 ),
               ),
             ),

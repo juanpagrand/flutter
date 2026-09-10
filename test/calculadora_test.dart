@@ -8,6 +8,13 @@ import 'package:flutter_application_1/calculo.dart';
 String pantalla(WidgetTester tester) =>
     tester.widget<Text>(find.byKey(const Key('pantalla'))).data!;
 
+/// Lee el texto del indicador de paridad ('Par' o 'Impar'), o null si no está visible.
+String? paridadPantalla(WidgetTester tester) {
+  final finder = find.byKey(const Key('paridad'));
+  if (finder.evaluate().isEmpty) return null;
+  return tester.widget<Text>(finder).data;
+}
+
 /// Toca una tecla por su rótulo.
 Future<void> tocar(WidgetTester tester, String rotulo) async {
   await tester.tap(find.widgetWithText(ElevatedButton, rotulo));
@@ -57,6 +64,24 @@ void main() {
       expect(c.esValido(c.raizCuadrada(-9)), isFalse);
       expect(c.esValido(c.ln(0)), isFalse);
       expect(c.esValido(c.sumar(7, 3)), isTrue);
+    });
+
+    test('paridad identifica pares, impares y descarta no enteros o inválidos', () {
+      expect(c.esPar(4), isTrue);
+      expect(c.esPar(0), isTrue);
+      expect(c.esPar(-6), isTrue);
+      expect(c.esPar(7), isFalse);
+      expect(c.esPar(-3), isFalse);
+      expect(c.esPar(3.5), isNull);
+      expect(c.esPar(double.infinity), isNull);
+      expect(c.esPar(double.nan), isNull);
+
+      expect(c.paridad(4), 'Par');
+      expect(c.paridad(7), 'Impar');
+      expect(c.paridad(0), 'Par');
+      expect(c.paridad(-3), 'Impar');
+      expect(c.paridad(3.5), isNull);
+      expect(c.paridad(double.infinity), isNull);
     });
   });
 
@@ -176,6 +201,31 @@ void main() {
       await montar(tester);
       await teclear(tester, ['7', '+', 'C', '=']);
       expect(pantalla(tester), '0');
+    });
+
+    testWidgets('indica si el resultado es Par o Impar', (tester) async {
+      await montar(tester);
+      expect(paridadPantalla(tester), 'Par'); // arranca en 0 (par)
+
+      await teclear(tester, ['7', '+', '3', '=']);
+      expect(pantalla(tester), '10');
+      expect(paridadPantalla(tester), 'Par');
+
+      await teclear(tester, ['+', '5', '=']);
+      expect(pantalla(tester), '15');
+      expect(paridadPantalla(tester), 'Impar');
+    });
+
+    testWidgets('no muestra paridad si el resultado tiene decimales o es Error',
+        (tester) async {
+      await montar(tester);
+      await teclear(tester, ['7', '÷', '2', '=']);
+      expect(pantalla(tester), '3.5');
+      expect(paridadPantalla(tester), isNull);
+
+      await teclear(tester, ['C', '5', '÷', '0', '=']);
+      expect(pantalla(tester), 'Error');
+      expect(paridadPantalla(tester), isNull);
     });
   });
 }

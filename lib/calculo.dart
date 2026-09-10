@@ -46,4 +46,26 @@ class Calculo {
   /// pregunta cubre los tres casos. Con `isNaN` a secas se colaría la división
   /// por cero.
   bool esValido(double r) => r.isFinite;
+
+  /// Determina si un número es par.
+  ///
+  /// Devuelve `true` si es entero y par, `false` si es entero e impar,
+  /// o `null` si no es finito, tiene parte decimal o excede el rango de
+  /// representación entera de 64 bits.
+  bool? esPar(double r) {
+    if (!esValido(r)) return null;
+    final limpio = double.parse(r.toStringAsFixed(10));
+    if (limpio % 1 == 0 && limpio.abs() < 1e15) {
+      return limpio.toInt().abs() % 2 == 0;
+    }
+    return null;
+  }
+
+  /// Devuelve `'Par'`, `'Impar'`, o `null` si el número no tiene paridad
+  /// aplicable (números con decimales, errores o desbordados).
+  String? paridad(double r) {
+    final par = esPar(r);
+    if (par == null) return null;
+    return par ? 'Par' : 'Impar';
+  }
 }
